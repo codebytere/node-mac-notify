@@ -1,5 +1,8 @@
 #include <napi.h>
 
+#include <dispatch/dispatch.h>
+#include <notify.h>
+
 #include <map>
 
 // Apple APIs
@@ -9,32 +12,29 @@
 #include <IOKit/pwr_mgt/IOPMKeys.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <IOKit/pwr_mgt/IOPMLibDefs.h>
-#include <notify.h>
 
 Napi::ThreadSafeFunction ts_fn;
 std::map<int, std::string> observers;
-
-/***** HELPER FUNCTIONS *****/
 
 /***** EXPORTED FUNCTIONS *****/
 
 Napi::Value SendSystemNotification(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  const std::string type = info[0].As<Napi::String>().Utf8Value();
-  uint32_t result = notify_post(type.c_str());
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
+  uint32_t result = notify_post(event_key.c_str());
 
   return Napi::Number::From(env, result);
 }
 
-Napi::Boolean SetupListener(const Napi::CallbackInfo &info) {
+Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  const std::string key = info[0].As<Napi::String>().Utf8Value();
+  __block const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
   for (auto &it : observers) {
-    if (it.second == key) {
-      Napi::Error::New(env, "An observer is already observing " + key)
+    if (it.second == event_key) {
+      Napi::Error::New(env, "An observer is already observing " + event_key)
           .ThrowAsJavaScriptException();
       return Napi::Boolean::New(env, false);
     }
@@ -43,39 +43,43 @@ Napi::Boolean SetupListener(const Napi::CallbackInfo &info) {
   ts_fn = Napi::ThreadSafeFunction::New(env, info[1].As<Napi::Function>(),
                                         "emitCallback", 0, 1);
 
-  auto on_change_block = ^(int x) {
-    auto callback = [](Napi::Env env, Napi::Function js_cb, const char *val) {
-      js_cb.Call({Napi::String::New(env, val)});
+  auto on_change_block = ^() {
+    auto callback = [](Napi::Env env, Napi::Function js_cb,
+                       const char *event_name) {
+      js_cb.Call({Napi::String::New(env, event_name)});
     };
-    ts_fn.BlockingCall(key.c_str(), callback);
+
+    const char *event = event_key.c_str();
+    ts_fn.BlockingCall(event, callback);
   };
 
   int registration_token;
   uint32_t status = notify_register_dispatch(
-      key.c_str(), &registration_token, dispatch_get_main_queue(), ^(int x) {
-        on_change_block(x);
+      event_key.c_str(), &registration_token,
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(int) {
+        on_change_block();
       });
 
-  if (status != 0) {
-    Napi::Error::New(env, "Failed to register for " + key)
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to register for " + event_key)
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
 
-  observers.emplace(registration_token, key);
+  observers.emplace(registration_token, event_key);
+
   return Napi::Boolean::New(env, true);
 }
 
 Napi::Boolean CheckNotification(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  const std::string key = info[0].As<Napi::String>().Utf8Value();
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
   int registration_token;
   for (auto &it : observers) {
-    if (it.second == key) {
+    if (it.second == event_key)
       registration_token = it.first;
-    }
   }
 
   if (!registration_token) {
@@ -94,22 +98,28 @@ Napi::Boolean CheckNotification(const Napi::CallbackInfo &info) {
 Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  const std::string key = info[0].As<Napi::String>().Utf8Value();
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
   int registration_token;
   for (auto &it : observers) {
-    if (it.second == key) {
+    if (it.second == event_key)
       registration_token = it.first;
-    }
   }
 
   if (!registration_token) {
-    Napi::Error::New(env, "No observer exists for " + key)
+    Napi::Error::New(env, "No observer exists for " + event_key)
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
 
-  notify_cancel(registration_token);
+  uint32_t status = notify_cancel(registration_token);
+
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to deregister for " + event_key)
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
   observers.erase(registration_token);
 
   return Napi::Boolean::New(env, true);
@@ -117,8 +127,8 @@ Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
 
 // Initializes all functions exposed to JS
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-  exports.Set(Napi::String::New(env, "setupListener"),
-              Napi::Function::New(env, SetupListener));
+  exports.Set(Napi::String::New(env, "addListener"),
+              Napi::Function::New(env, AddListener));
   exports.Set(Napi::String::New(env, "removeListener"),
               Napi::Function::New(env, RemoveListener));
   exports.Set(Napi::String::New(env, "checkNotification"),
