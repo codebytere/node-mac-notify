@@ -7,11 +7,6 @@
 
 // Apple APIs
 #import <Foundation/Foundation.h>
-#include <IOKit/IOKitLib.h>
-#include <IOKit/pwr_mgt/IOPM.h>
-#include <IOKit/pwr_mgt/IOPMKeys.h>
-#include <IOKit/pwr_mgt/IOPMLib.h>
-#include <IOKit/pwr_mgt/IOPMLibDefs.h>
 
 Napi::ThreadSafeFunction ts_fn;
 std::map<int, std::string> observers;
