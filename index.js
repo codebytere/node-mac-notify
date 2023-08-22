@@ -4,8 +4,8 @@ const { EventEmitter } = require('events')
 
 const listener = new EventEmitter()
 
-listener.setup = (name) => {
-  notify.setupListener(name, listener.emit.bind(listener))
+listener.add = (name) => {
+  notify.addListener(name, listener.emit.bind(listener))
 }
 
 listener.remove = (name) => {
