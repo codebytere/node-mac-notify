@@ -13,6 +13,8 @@ std::map<int, std::string> observers;
 
 /***** HELPER FUNCTIONS *****/
 
+// Returns a human-readable error message from a Darwin Notification status
+// code.
 std::string ErrorMessageFromStatus(uint32_t status) {
   switch (status) {
   case NOTIFY_STATUS_INVALID_FILE:
@@ -35,6 +37,8 @@ std::string ErrorMessageFromStatus(uint32_t status) {
   }
 }
 
+// Returns the registration token for a given event key, or -1 if no observer
+// exists.
 int GetTokenFromEventKey(const std::string &event_key) {
   bool found = false;
 
@@ -51,6 +55,7 @@ int GetTokenFromEventKey(const std::string &event_key) {
 
 /***** EXPORTED FUNCTIONS *****/
 
+// Sends a Darwin Notification.
 Napi::Value SendSystemNotification(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -60,6 +65,7 @@ Napi::Value SendSystemNotification(const Napi::CallbackInfo &info) {
   return Napi::Number::From(env, result);
 }
 
+// Adds a listener for a Darwin Notification.
 Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -105,6 +111,7 @@ Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
   return Napi::Boolean::New(env, true);
 }
 
+// Suspends a listener for a Darwin Notification.
 Napi::Boolean SuspendListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -129,6 +136,7 @@ Napi::Boolean SuspendListener(const Napi::CallbackInfo &info) {
   return Napi::Boolean::New(env, true);
 }
 
+// Resumes a suspended listener for a Darwin Notification.
 Napi::Boolean ResumeListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -154,6 +162,7 @@ Napi::Boolean ResumeListener(const Napi::CallbackInfo &info) {
   return Napi::Boolean::New(env, true);
 }
 
+// Removes a listener for a Darwin Notification.
 Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
