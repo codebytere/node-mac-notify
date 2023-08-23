@@ -11,6 +11,22 @@
 Napi::ThreadSafeFunction ts_fn;
 std::map<int, std::string> observers;
 
+/***** HELPER FUNCTIONS *****/
+
+int GetTokenFromEventKey(const std::string &event_key) {
+  bool found = false;
+
+  int registration_token;
+  for (auto &it : observers) {
+    if (it.second == event_key) {
+      found = true;
+      registration_token = it.first;
+    }
+  }
+
+  return found ? registration_token : -1;
+}
+
 /***** EXPORTED FUNCTIONS *****/
 
 Napi::Value SendSystemNotification(const Napi::CallbackInfo &info) {
@@ -71,13 +87,8 @@ Napi::Boolean SuspendListener(const Napi::CallbackInfo &info) {
 
   const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
-  int registration_token;
-  for (auto &it : observers) {
-    if (it.second == event_key)
-      registration_token = it.first;
-  }
-
-  if (!registration_token) {
+  int registration_token = GetTokenFromEventKey(event_key);
+  if (registration_token == -1) {
     Napi::Error::New(env, "No observer exists for " + event_key)
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
@@ -99,13 +110,8 @@ Napi::Boolean ResumeListener(const Napi::CallbackInfo &info) {
 
   const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
-  int registration_token;
-  for (auto &it : observers) {
-    if (it.second == event_key)
-      registration_token = it.first;
-  }
-
-  if (!registration_token) {
+  int registration_token = GetTokenFromEventKey(event_key);
+  if (registration_token == -1) {
     Napi::Error::New(env, "No observer exists for " + event_key)
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
@@ -127,13 +133,8 @@ Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
 
   const std::string event_key = info[0].As<Napi::String>().Utf8Value();
 
-  int registration_token;
-  for (auto &it : observers) {
-    if (it.second == event_key)
-      registration_token = it.first;
-  }
-
-  if (!registration_token) {
+  int registration_token = GetTokenFromEventKey(event_key);
+  if (registration_token == -1) {
     Napi::Error::New(env, "No observer exists for " + event_key)
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
