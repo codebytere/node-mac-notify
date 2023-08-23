@@ -4,20 +4,20 @@ const { EventEmitter } = require('events')
 
 const listener = new EventEmitter()
 
-listener.add = (name) => {
-  notify.addListener(name, listener.emit.bind(listener))
+listener.add = function add(name) {
+  return notify.addListener(name, listener.emit.bind(listener))
 }
 
-listener.remove = (name) => {
-  notify.removeListener(name)
+listener.remove = function remove(name) {
+  return notify.removeListener(name)
 }
 
-listener.suspend = (name) => {
-  notify.suspendListener(name)
+listener.suspend = function suspend(name) {
+  return notify.suspendListener(name)
 }
 
-listener.resume = (name) => {
-  notify.resumeListener(name)
+listener.resume = function resume(name) {
+  return notify.resumeListener(name)
 }
 
 module.exports = {
