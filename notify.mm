@@ -66,6 +66,34 @@ Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
   return Napi::Boolean::New(env, true);
 }
 
+Napi::Boolean SuspendListener(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
+
+  int registration_token;
+  for (auto &it : observers) {
+    if (it.second == event_key)
+      registration_token = it.first;
+  }
+
+  if (!registration_token) {
+    Napi::Error::New(env, "No observer exists for " + event_key)
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  uint32_t status = notify_suspend(registration_token);
+
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to suspend notifications for " + event_key)
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  return Napi::Boolean::New(env, true);
+}
+
 Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -102,6 +130,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, AddListener));
   exports.Set(Napi::String::New(env, "removeListener"),
               Napi::Function::New(env, RemoveListener));
+  exports.Set(Napi::String::New(env, "suspendListener"),
+              Napi::Function::New(env, SuspendListener));
   exports.Set(Napi::String::New(env, "sendSystemNotification"),
               Napi::Function::New(env, SendSystemNotification));
 

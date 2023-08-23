@@ -12,6 +12,10 @@ listener.remove = (name) => {
   notify.removeListener(name)
 }
 
+listener.suspend = (name) => {
+  notify.suspendListener(name)
+}
+
 module.exports = {
   listener,
   sendSystemNotification: notify.sendSystemNotification,
