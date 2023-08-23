@@ -16,6 +16,10 @@ listener.suspend = (name) => {
   notify.suspendListener(name)
 }
 
+listener.resume = (name) => {
+  notify.resumeListener(name)
+}
+
 module.exports = {
   listener,
   sendSystemNotification: notify.sendSystemNotification,
