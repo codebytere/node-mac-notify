@@ -186,6 +186,8 @@ Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
 
   observers.erase(registration_token);
 
+  ts_fn.Release();
+
   return Napi::Boolean::New(env, true);
 }
 
