@@ -13,6 +13,28 @@ std::map<int, std::string> observers;
 
 /***** HELPER FUNCTIONS *****/
 
+std::string ErrorMessageFromStatus(uint32_t status) {
+  switch (status) {
+  case NOTIFY_STATUS_INVALID_FILE:
+    return "Invalid File";
+  case NOTIFY_STATUS_INVALID_NAME:
+    return "Invalid Name";
+  case NOTIFY_STATUS_INVALID_PORT:
+    return "Invalid Port";
+  case NOTIFY_STATUS_INVALID_REQUEST:
+    return "Invalid Request";
+  case NOTIFY_STATUS_INVALID_SIGNAL:
+    return "Invalid Signal";
+  case NOTIFY_STATUS_INVALID_TOKEN:
+    return "Invalid Token";
+  case NOTIFY_STATUS_NOT_AUTHORIZED:
+    return "Not Authorized";
+  case NOTIFY_STATUS_FAILED:
+  default:
+    return "Unknown Failure";
+  }
+}
+
 int GetTokenFromEventKey(const std::string &event_key) {
   bool found = false;
 
@@ -72,7 +94,8 @@ Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
       });
 
   if (status != NOTIFY_STATUS_OK) {
-    Napi::Error::New(env, "Failed to register for " + event_key)
+    Napi::Error::New(env, "Failed to register for " + event_key + ": " +
+                              ErrorMessageFromStatus(status))
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
@@ -97,7 +120,8 @@ Napi::Boolean SuspendListener(const Napi::CallbackInfo &info) {
   uint32_t status = notify_suspend(registration_token);
 
   if (status != NOTIFY_STATUS_OK) {
-    Napi::Error::New(env, "Failed to suspend notifications for " + event_key)
+    Napi::Error::New(env, "Failed to suspend notifications for " + event_key +
+                              ": " + ErrorMessageFromStatus(status))
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
@@ -120,7 +144,9 @@ Napi::Boolean ResumeListener(const Napi::CallbackInfo &info) {
   uint32_t status = notify_resume(registration_token);
 
   if (status != NOTIFY_STATUS_OK) {
-    Napi::Error::New(env, "Failed to resume notifications for " + event_key)
+
+    Napi::Error::New(env, "Failed to resume notifications for " + event_key +
+                              ": " + ErrorMessageFromStatus(status))
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
@@ -143,7 +169,8 @@ Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
   uint32_t status = notify_cancel(registration_token);
 
   if (status != NOTIFY_STATUS_OK) {
-    Napi::Error::New(env, "Failed to deregister for " + event_key)
+    Napi::Error::New(env, "Failed to deregister for " + event_key + ": " +
+                              ErrorMessageFromStatus(status))
         .ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
