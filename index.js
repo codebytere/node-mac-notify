@@ -4,6 +4,13 @@ const { EventEmitter } = require('events')
 
 const listener = new EventEmitter()
 
+function postNotification(name) {
+  if (typeof name !== 'string') {
+    throw new TypeError('name must be a String')
+  }
+  return notify.postNotification(name)
+}
+
 listener.add = function add(name) {
   return notify.addListener(name, listener.emit.bind(listener))
 }
@@ -22,5 +29,5 @@ listener.resume = function resume(name) {
 
 module.exports = {
   listener,
-  sendSystemNotification: notify.sendSystemNotification,
+  postNotification,
 }

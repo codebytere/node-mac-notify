@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { sendSystemNotification, listener } = require('../index')
+const { postNotification, listener } = require('../index')
 
 describe('node-mac-notify', () => {
   let key = ''
@@ -12,7 +12,7 @@ describe('node-mac-notify', () => {
   })
 
   it('should send a notification', () => {
-    const status = sendSystemNotification('com.apple.some.test.key')
+    const status = postNotification('com.apple.some.test.key')
     expect(status).to.equal(0)
   })
 
@@ -40,7 +40,7 @@ describe('node-mac-notify', () => {
       done()
     })
 
-    const status = sendSystemNotification(key)
+    const status = postNotification(key)
     expect(status).to.equal(0)
   })
 })

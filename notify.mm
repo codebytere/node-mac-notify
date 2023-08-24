@@ -55,8 +55,9 @@ int GetTokenFromEventKey(const std::string &event_key) {
 
 /***** EXPORTED FUNCTIONS *****/
 
-// Sends a Darwin Notification.
-Napi::Value SendSystemNotification(const Napi::CallbackInfo &info) {
+// Sends a Darwin Notification for the given name to all clients that have
+// registered for notifications of this name.
+Napi::Value PostNotification(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   const std::string event_key = info[0].As<Napi::String>().Utf8Value();
@@ -201,8 +202,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, SuspendListener));
   exports.Set(Napi::String::New(env, "resumeListener"),
               Napi::Function::New(env, ResumeListener));
-  exports.Set(Napi::String::New(env, "sendSystemNotification"),
-              Napi::Function::New(env, SendSystemNotification));
+  exports.Set(Napi::String::New(env, "postNotification"),
+              Napi::Function::New(env, PostNotification));
 
   return exports;
 }
