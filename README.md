@@ -80,8 +80,49 @@ const name = 'my-event-name'
 
 listener.add(name)
 
-const removed = listener.remove(name);
+const removed = listener.remove(name)
 console.log(`Event handler for ${name} was ${removed ? 'successfully' : 'unsuccessfully'} removed.`)
 ```
 
 This method wraps [`notify_cancel`](https://www.unix.com/man-page/osx/3/notify_cancel).
+
+#### `notify.listener.suspend(name)`
+
+* `name` String - The event name to suspend an existing event handler for.
+
+Suspends a event handler for the event with name `name`.
+
+```js
+const { listener } = require('node-mac-notify')
+
+const name = 'my-event-name'
+
+listener.add(name)
+
+const suspended = listener.suspend(name)
+console.log(`Event handler for ${name} was ${suspended ? 'successfully' : 'unsuccessfully'} suspended.`)
+```
+
+This method wraps [`notify_suspend`](https://www.unix.com/man-page/osx/3/notify_suspend).
+
+#### `notify.listener.resume(name)`
+
+* `name` String - The event name to resume an suspended event handler for.
+
+Resumes a suspended event handler for the event with name `name`.
+
+```js
+const { listener } = require('node-mac-notify')
+
+const name = 'my-event-name'
+
+listener.add(name)
+
+const suspended = listener.suspend(name)
+if (suspended) {
+  const resumed = listener.resume(name)
+  console.log(`Suspended event handler for ${name} was ${resumed ? 'successfully' : 'unsuccessfully'} resumed.`)
+}
+```
+
+This method wraps [`notify_resume`](https://www.unix.com/man-page/osx/3/notify_resume).
