@@ -57,13 +57,20 @@ int GetTokenFromEventKey(const std::string &event_key) {
 
 // Sends a Darwin Notification for the given name to all clients that have
 // registered for notifications of this name.
-Napi::Value PostNotification(const Napi::CallbackInfo &info) {
+Napi::Boolean PostNotification(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   const std::string event_key = info[0].As<Napi::String>().Utf8Value();
-  uint32_t result = notify_post(event_key.c_str());
+  uint32_t status = notify_post(event_key.c_str());
 
-  return Napi::Number::From(env, result);
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to post a notification for " + event_key +
+                              ": " + ErrorMessageFromStatus(status))
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  return Napi::Boolean::New(env, true);
 }
 
 // Adds a listener for a Darwin Notification.

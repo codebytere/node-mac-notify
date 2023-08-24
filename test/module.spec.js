@@ -12,8 +12,8 @@ describe('node-mac-notify', () => {
   })
 
   it('should send a notification', () => {
-    const status = postNotification('com.apple.some.test.key')
-    expect(status).to.equal(0)
+    const success = postNotification('com.apple.some.test.key')
+    expect(success).to.be.true
   })
 
   it('should throw if a non-existent notification is removed', () => {
@@ -40,7 +40,7 @@ describe('node-mac-notify', () => {
       done()
     })
 
-    const status = postNotification(key)
-    expect(status).to.equal(0)
+    const success = postNotification(key)
+    expect(success).to.be.true
   })
 })
