@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { postNotification, listener } = require('../index')
+const { postNotification, setState, getState, listener } = require('../index')
 
 describe('node-mac-notify', () => {
   let key = ''
@@ -90,5 +90,30 @@ describe('node-mac-notify', () => {
 
     const success = postNotification(key)
     expect(success).to.be.true
+  })
+
+  it('throws when setting state with an invalid state', () => {
+    expect(() => {
+      setState('i.do.not.exist', 'ping')
+    }).to.throw('state must be a BigInt')
+  })
+
+  it('throws when setting state on a non-existent notification', () => {
+    expect(() => {
+      setState('i.do.not.exist', 1n)
+    }).to.throw(`No registration token exists for ${key}`)
+  })
+
+  it('can set state for a notification', () => {
+    key = 'com.apple.state.test.key'
+
+    const added = listener.add(key)
+    expect(added).to.be.true
+
+    const success = setState(key, 5n)
+    expect(success).to.be.true
+
+    const state = getState(key)
+    expect(state).to.equal(5n)
   })
 })
