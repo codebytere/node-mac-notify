@@ -11,6 +11,23 @@ function postNotification(name) {
   return notify.postNotification(name)
 }
 
+function setState(name, state) {
+  if (typeof name !== 'string') {
+    throw new TypeError('name must be a String')
+  }
+  if (typeof state !== 'bigint') {
+    throw new TypeError('state must be a BigInt')
+  }
+  return notify.setState(name, state)
+}
+
+function getState(name) {
+  if (typeof name !== 'string') {
+    throw new TypeError('name must be a String')
+  }
+  return notify.getState(name)
+}
+
 listener.add = function add(name) {
   return notify.addListener(name, listener.emit.bind(listener))
 }
@@ -30,4 +47,6 @@ listener.resume = function resume(name) {
 module.exports = {
   listener,
   postNotification,
+  setState,
+  getState,
 }

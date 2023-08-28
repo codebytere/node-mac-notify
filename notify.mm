@@ -73,6 +73,60 @@ Napi::Boolean PostNotification(const Napi::CallbackInfo &info) {
   return Napi::Boolean::New(env, true);
 }
 
+Napi::Boolean SetState(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
+
+  int registration_token = GetTokenFromEventKey(event_key);
+  if (registration_token == -1) {
+    Napi::Error::New(env, "No registration token exists for " + event_key)
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  bool lossless = true;
+  uint64_t new_state = info[1].As<Napi::BigInt>().Uint64Value(&lossless);
+  if (!lossless)
+    fprintf(stderr, "setState: State value %llx was truncated\n", new_state);
+
+  uint32_t status = notify_set_state(registration_token, new_state);
+
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to set state for " + event_key + ": " +
+                              ErrorMessageFromStatus(status))
+        .ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  return Napi::Boolean::New(env, true);
+}
+
+Napi::BigInt GetState(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+
+  const std::string event_key = info[0].As<Napi::String>().Utf8Value();
+
+  int registration_token = GetTokenFromEventKey(event_key);
+  if (registration_token == -1) {
+    Napi::Error::New(env, "No registration token exists for " + event_key)
+        .ThrowAsJavaScriptException();
+    return Napi::BigInt();
+  }
+
+  uint64_t state;
+  uint32_t status = notify_get_state(registration_token, &state);
+
+  if (status != NOTIFY_STATUS_OK) {
+    Napi::Error::New(env, "Failed to fetch state for " + event_key + ": " +
+                              ErrorMessageFromStatus(status))
+        .ThrowAsJavaScriptException();
+    return Napi::BigInt();
+  }
+
+  return Napi::BigInt::New(env, state);
+}
+
 // Adds a listener for a Darwin Notification.
 Napi::Boolean AddListener(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -201,6 +255,12 @@ Napi::Boolean RemoveListener(const Napi::CallbackInfo &info) {
 
 // Initializes all functions exposed to JS
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set(Napi::String::New(env, "postNotification"),
+              Napi::Function::New(env, PostNotification));
+  exports.Set(Napi::String::New(env, "setState"),
+              Napi::Function::New(env, SetState));
+  exports.Set(Napi::String::New(env, "getState"),
+              Napi::Function::New(env, GetState));
   exports.Set(Napi::String::New(env, "addListener"),
               Napi::Function::New(env, AddListener));
   exports.Set(Napi::String::New(env, "removeListener"),
@@ -209,8 +269,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, SuspendListener));
   exports.Set(Napi::String::New(env, "resumeListener"),
               Napi::Function::New(env, ResumeListener));
-  exports.Set(Napi::String::New(env, "postNotification"),
-              Napi::Function::New(env, PostNotification));
 
   return exports;
 }

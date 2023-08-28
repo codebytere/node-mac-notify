@@ -41,6 +41,51 @@ console.log(`Notification for ${name} was ${posted ? 'successfully' : 'unsuccess
 
 This method wraps [`notify_post`](https://www.unix.com/man-page/osx/3/notify_post).
 
+
+### `notify.getState(name)`
+
+* `name` String - The event name to fetch the current state for.
+
+Returns [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) - The current state of `name`.
+
+Example:
+```js
+const { getState, listener } = require('node-mac-notify')
+
+const name = 'my-event-name'
+
+const added = listener.add(name)
+console.log(`Event handler for ${name} was ${added ? 'successfully' : 'unsuccessfully'} added.`)
+
+const state = getState(name)
+console.log(`Current state of ${name} is ${state}`)
+```
+
+This method wraps [`notify_get_state`](https://www.unix.com/man-page/osx/3/notify_get_state).
+
+### `notify.setState(name, state)`
+
+* `name` String - The event name to set the state for.
+* `state` [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) - Integer value of the new state.
+
+Returns `Boolean` - Whether or not the new state was successfully set for `name`.
+
+Example:
+```js
+const { getState, listener } = require('node-mac-notify')
+
+const name = 'my-event-name'
+
+const added = listener.add(name)
+console.log(`Event handler for ${name} was ${added ? 'successfully' : 'unsuccessfully'} added.`)
+
+const newState = 5
+const success = setState(name, newState)
+console.log(`State for ${name} was ${success ? 'successfully' : 'unsuccessfully'} set to ${newState}.`)
+```
+
+This method wraps [`notify_set_state`](https://www.unix.com/man-page/osx/3/notify_set_state).
+
 ### `notify.listener`
 
 This module exposes an `EventEmitter`, which can be used to listen and manipulate notifications.
@@ -65,7 +110,6 @@ listener.on(name, () => {
 ```
 
 This method wraps [`notify_register_dispatch`](https://www.unix.com/man-page/osx/3/notify_register_dispatch).
-
 
 #### `notify.listener.remove(name)`
 
